@@ -1,0 +1,3 @@
+fastapi[standard]==0.141.1
+langchain==1.3.18
+langchain-community==0.4.2
