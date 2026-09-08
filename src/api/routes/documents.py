@@ -4,7 +4,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 
 from src.ingestion.loader import load_documents
 from src.ingestion.chunking import split_documents
-from src.ingestion.embedding import generate_embeddings
+from src.ingestion.embedding import generate_embeddings,delete_document_embeddings
 
 
 router = APIRouter()
@@ -63,6 +63,19 @@ async def upload_document(file: UploadFile = File(...)):
         if os.path.exists(file_path):
             os.remove(file_path)
 
-        raise HTTPException(status_code=500,detail=f"Failed to process document: {str(exc)}")
+        raise HTTPException(status_code=500,detail=f"Failed to process document:{str(exc)}")
 
-    return {"message": "File uploaded successfully","filename": file.filename}
+    return {"message":"File uploaded successfully","filename": file.filename}
+
+@router.delete("/{filename}")
+def delete_document(filename: str):
+
+    file_path = os.path.join("data", filename)
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404,detail="Document not found.")
+
+    delete_document_embeddings(filename)
+    os.remove(file_path)
+
+    return { "message": "Document deleted successfully."}
