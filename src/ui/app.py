@@ -12,10 +12,10 @@ role = st.sidebar.radio( "Select Role", ["HR", "Employee"] )
 if role == "HR": 
     st.subheader("Upload Policy Documents") 
  
-    uploaded_file = st.file_uploader( 
-        "Choose a Markdown or text file", 
-        type=["md", "txt"] 
-    ) 
+    uploaded_file = st.file_uploader(
+    "Choose a Markdown, text, or PDF file",
+    type=["md", "txt", "pdf"]
+    )
  
     if uploaded_file and st.button("Upload"): 
  
@@ -108,7 +108,10 @@ else:
 
                         for citation in citations:
                             document = citation.get("document","Unknown document")
-                            st.write(document)
+                            section = citation.get("section","Unknown section")
+
+                            st.write(f"Document: {document}")
+                            st.write(f"Section: {section}")
                     else:
                         st.info("No citations available.")
  

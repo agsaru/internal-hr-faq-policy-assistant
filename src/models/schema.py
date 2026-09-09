@@ -14,4 +14,4 @@ class Answer(BaseModel):
 
 class LLMResponse(BaseModel):
     answer: str
-    sections_used: List[str]
+    sections_used: List[str] = []

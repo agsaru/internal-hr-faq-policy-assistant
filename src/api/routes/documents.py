@@ -34,8 +34,8 @@ async def upload_document(file: UploadFile = File(...)):
 
     extension = os.path.splitext(file.filename)[1].lower()
 
-    if extension not in {".md", ".txt"}:
-        raise HTTPException(status_code=400,detail="Only .md and .txt files are supported.")
+    if extension not in {".md", ".txt", ".pdf"}:
+        raise HTTPException(status_code=400,detail="Only .md, .txt and .pdf files are supported.")
 
     data = await file.read()
 
@@ -57,13 +57,15 @@ async def upload_document(file: UploadFile = File(...)):
 
         chunks = split_documents(elements)
 
+        delete_document_embeddings(file.filename)
+
         generate_embeddings(chunks)
 
     except Exception as exc:
         if os.path.exists(file_path):
             os.remove(file_path)
 
-        raise HTTPException(status_code=500,detail=f"Failed to process document:{str(exc)}")
+        raise HTTPException(status_code=500,detail=f"Failed to process document")
 
     return {"message":"File uploaded successfully","filename": file.filename}
 

@@ -11,7 +11,7 @@ def split_documents(elements):
         max_characters=1000,
         new_after_n_chars=750,
         overlap=100,
-        combine_text_under_n_chars=0
+        combine_text_under_n_chars=200
     )
 
     print(f"Generated chunks: {len(chunks)}")

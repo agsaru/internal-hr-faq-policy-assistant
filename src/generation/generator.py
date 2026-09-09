@@ -85,20 +85,22 @@ QUESTION:
 
     answer = response.answer
 
-    for section in response.sections_used:
+    citations = []
 
-    for doc, score in results:
+    for section in response.sections_used or []:
 
-        document_section = doc.metadata.get("section","Unknown")
+        for doc, score in results:
 
-        if document_section == section:
+            document_section = doc.metadata.get("section","Unknown")
 
-            citation = {
-                "document": doc.metadata.get("document","Unknown"),
-                "section": document_section
-            }
+            if (section.lower() in document_section.lower()or document_section.lower() in section.lower()):
 
-            if citation not in citations:
-                citations.append(citation)
+                citation = {
+                    "document": doc.metadata.get("document","Unknown"),
+                    "section": document_section
+                }
+
+                if citation not in citations:
+                    citations.append(citation)
 
     return {"answer": answer,"citations": citations}
