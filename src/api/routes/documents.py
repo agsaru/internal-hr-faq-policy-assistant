@@ -50,12 +50,12 @@ async def upload_document(file: UploadFile = File(...)):
         f.write(data)
 
     try:
-        documents = load_documents(file_path)
+        elements = load_documents(file_path)
 
-        for document in documents:
-            document.metadata["document"] = file.filename
+        for element in elements:
+            element.metadata.filename = file.filename
 
-        chunks = split_documents(documents)
+        chunks = split_documents(elements)
 
         generate_embeddings(chunks)
 

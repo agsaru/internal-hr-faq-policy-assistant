@@ -1,15 +1,20 @@
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
+from src.ingestion.embedding import get_vector_store
 
-embedder=HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
 
-def search_documents(query,k=3):
-   
-    vector_store=Chroma(
-        persist_directory="./chroma_db",
-        embedding_function=embedder,
-        collection_name="hr_faq_policies"
-    )
-    documents=vector_store.similarity_search(query,k=k)
-    return documents
+def search_documents(query, k=5):
 
+    vector_store = get_vector_store()
+
+    results = vector_store.similarity_search_with_score(query,k=k)
+
+    for index, (document, score) in enumerate(results):
+
+        print(f"RESULT {index + 1}")
+        print(f"Score: {score}")
+        print(f"Document: {document.metadata.get('document')}")
+        print(f"Section: {document.metadata.get('section')}")
+        print(f"Chunk: {document.metadata.get('chunk_index')}")
+        print("Content:")
+        print(document.page_content)
+
+    return results
