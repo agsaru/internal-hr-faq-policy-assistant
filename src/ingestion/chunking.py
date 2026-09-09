@@ -20,13 +20,9 @@ def split_documents(elements):
 
     for index, chunk in enumerate(chunks):
         content = str(chunk).strip()
-        lines = content.splitlines()
-
-        for line in lines:
-            line = line.strip()
-            if line and len(line) >= 3 and line[0].isdigit() and "." in line:
-                current_section = line
-                break
+        orig_elements = getattr(chunk.metadata, "orig_elements", [])
+        if orig_elements and type(orig_elements[0]).__name__ in ("Title", "Header"):
+            current_section = str(orig_elements[0]).strip()
 
         metadata = chunk.metadata.to_dict()
         document_name = metadata.get("filename", "unknown")

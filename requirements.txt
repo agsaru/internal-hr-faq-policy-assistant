@@ -9,3 +9,4 @@ streamlit==1.63.0
 unstructured[md,pdf]==0.27.5
 unstructured-inference==1.6.13
 rank-bm25==0.2.2
+python-dotenv==1.2.3

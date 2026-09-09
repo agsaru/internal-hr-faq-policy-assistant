@@ -35,7 +35,7 @@ def generate_answer(query):
         }
 
     context = ""
-    for index, (doc, score) in enumerate(results):
+    for doc, score in results:
         context += f"""
 Document: {doc.metadata.get("document", "Unknown")}
 Section: {doc.metadata.get("section", "Unknown")}

@@ -19,17 +19,7 @@ def generate_embeddings(chunks):
     vector_store = get_vector_store()
     vector_store.add_documents(chunks)
 
-    results = vector_store._collection.get(
-        limit=1,
-        include=["documents", "metadatas"],
-    )
-
-    if results["ids"]:
-        print("\nStored chunk:")
-        print(f"ID: {results['ids'][0]}")
-        print(f"Document: {results['documents'][0]}")
-        print(f"Metadata: {results['metadatas'][0]}")
-
+    print(f"Added {len(chunks)} chunks to vector store.")
     return vector_store
 
 
