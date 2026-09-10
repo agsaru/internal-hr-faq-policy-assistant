@@ -19,20 +19,22 @@ if role == "HR":
 
     if uploaded_file and st.button("Upload"):
         try:
-            response = requests.post(
-                f"{BACKEND_API_URL}/documents/upload",
-                files={
-                    "file": (
-                        uploaded_file.name,
-                        uploaded_file.getvalue(),
-                        uploaded_file.type,
-                    )
-                },
-            )
+            with st.spinner("Uploading document"):
+                response = requests.post(
+                    f"{BACKEND_API_URL}/documents/upload",
+                    files={
+                        "file": (
+                            uploaded_file.name,
+                            uploaded_file.getvalue(),
+                            uploaded_file.type,
+                        )
+                    },
+                )
 
             if response.status_code == 200:
                 message = response.json().get("message", "Policy uploaded successfully.")
                 st.success(message)
+                st.rerun()
             else:
                 st.error("Upload failed.")
         except requests.exceptions.ConnectionError:
@@ -58,9 +60,10 @@ if role == "HR":
                     with col2:
                         if st.button("Delete", key=document["filename"]):
                             try:
-                                delete_response = requests.delete(
-                                    f"{BACKEND_API_URL}/documents/{document['filename']}"
-                                )
+                                with st.spinner("Deleting document"):
+                                    delete_response = requests.delete(
+                                        f"{BACKEND_API_URL}/documents/{document['filename']}"
+                                    )
                                 if delete_response.status_code == 200:
                                     st.success("Document deleted.")
                                     st.rerun()
@@ -81,10 +84,11 @@ else:
             st.warning("Please enter a question.")
         else:
             try:
-                response = requests.post(
-                    f"{BACKEND_API_URL}/chat/ask",
-                    json={"question": question},
-                )
+                with st.spinner("Searching policies and generating answer"):
+                    response = requests.post(
+                        f"{BACKEND_API_URL}/chat/ask",
+                        json={"question": question},
+                    )
 
                 if response.status_code == 200:
                     result = response.json()
