@@ -26,12 +26,10 @@ def search_documents(query, k=5):
 
     results = ensemble_retriever.invoke(query)[:k]
 
-    for index, document in enumerate(results):
-        print(f"RESULT {index + 1}")
+    for document in results:
         print(f"Document: {document.metadata.get('document')}")
         print(f"Section: {document.metadata.get('section')}")
-        print(f"Chunk: {document.metadata.get('chunk_index')}")
         print("Content:")
-        print(document.page_content)
+        print(document.page_content[:100])
 
     return results

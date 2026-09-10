@@ -3,7 +3,6 @@ from unstructured.chunking.title import chunk_by_title
 
 
 def split_documents(elements):
-    print(f"Input elements: {len(elements)}")
 
     chunks = chunk_by_title(
         elements,
@@ -34,11 +33,6 @@ def split_documents(elements):
         document = Document(page_content=content, metadata=metadata)
         documents.append(document)
 
-        print(f"CHUNK {index}")
-        print(f"Length: {len(content)}")
-        print(f"Document: {document_name}")
-        print(f"Section: {current_section}")
-        print("Content:")
-        print(content)
+    print(f"Generated {len(documents)} chunks.")
 
     return documents
