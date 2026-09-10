@@ -35,7 +35,7 @@ def generate_answer(query):
         }
 
     context = ""
-    for doc, score in results:
+    for doc in results:
         context += f"""
 Document: {doc.metadata.get("document", "Unknown")}
 Section: {doc.metadata.get("section", "Unknown")}
@@ -73,7 +73,7 @@ QUESTION:
     citations = []
 
     for section in response.sections_used or []:
-        for doc, score in results:
+        for doc in results:
             document_section = doc.metadata.get("section", "Unknown")
 
             if section.lower() in document_section.lower() or document_section.lower() in section.lower():
