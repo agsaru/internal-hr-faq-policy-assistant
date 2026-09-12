@@ -12,31 +12,43 @@ role = st.sidebar.radio("Select Role", ["HR", "Employee"])
 if role == "HR":
     st.subheader("Upload Policy Documents")
 
-    uploaded_file = st.file_uploader(
-        "Choose a Markdown, text, or PDF file",
+    if "uploader_key" not in st.session_state:
+        st.session_state.uploader_key = 0
+
+    uploaded_files = st.file_uploader(
+        "Choose Markdown, text, or PDF files",
         type=["md", "txt", "pdf"],
+        accept_multiple_files=True,
+        key=f"uploader_{st.session_state.uploader_key}",
     )
 
-    if uploaded_file and st.button("Upload"):
+    if uploaded_files and st.button("Upload"):
+        errors = []
         try:
-            with st.spinner("Uploading document"):
-                response = requests.post(
-                    f"{BACKEND_API_URL}/documents/upload",
-                    files={
-                        "file": (
-                            uploaded_file.name,
-                            uploaded_file.getvalue(),
-                            uploaded_file.type,
-                        )
-                    },
-                    timeout=120,
-                )
+            with st.spinner(f"Uploading {len(uploaded_files)} documents"):
+                for uploaded_file in uploaded_files:
+                    response = requests.post(
+                        f"{BACKEND_API_URL}/documents/upload",
+                        files={
+                            "file": (
+                                uploaded_file.name,
+                                uploaded_file.getvalue(),
+                                uploaded_file.type,
+                            )
+                        },
+                        timeout=120,
+                    )
 
-            if response.status_code == 200:
-                st.success(response.json().get("message", "Policy uploaded successfully."))
+                    if response.status_code != 200:
+                        errors.append(f"{uploaded_file.name}: {response.json().get('detail', 'Upload failed.')}")
+
+            if not errors:
+                st.toast("Successfully uploaded documents.")
+                st.session_state.uploader_key += 1
                 st.rerun()
             else:
-                st.error(response.json().get("detail", "Upload failed."))
+                for err in errors:
+                    st.error(err)
         except requests.exceptions.ConnectionError:
             st.error("FastAPI backend is not running.")
         except requests.exceptions.RequestException as exc:
