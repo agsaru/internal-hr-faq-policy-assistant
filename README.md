@@ -21,85 +21,6 @@ The project supports `.md`, `.txt`, and `.pdf` files.
 | **LLM Generation** | Google Gemini (`langchain-google-genai`) |
 | **Data Validation** | Pydantic |
 
-## Architecture
-
-The overall flow is:
-
-```text
-                 ┌──────────────────────┐
-                 │      HR Admin        │
-                 │ Upload .md/.txt/.pdf │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │    FastAPI    │
-                    │ Document API  │
-                    └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │ Load Document │
-                    │  Unstructured │
-                    └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │    Chunking   │
-                    │ title-aware   │
-                    └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │   Embeddings  │
-                    │ MiniLM locally│
-                    └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │   ChromaDB    │
-                    │ vector store  │
-                    └───────────────┘
-
-
-              Employee asks a question
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │    FastAPI    │
-                    │    /chat/ask  │
-                    └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │ Relevance     │
-                    │ check         │
-                    └───────┬───────┘
-                            │
-                  ┌─────────┴─────────┐
-                  │                   │
-             relevant            not relevant
-                  │                   │
-                  ▼                   ▼
-          ┌───────────────┐    ┌───────────────┐
-          │ Hybrid Search │    │ Safe refusal  │
-          │ Vector + BM25 │    │ + no citation │
-          └───────┬───────┘    └───────────────┘
-                  │
-                  ▼
-          ┌───────────────┐
-          │ Gemini        │
-          │ grounded      │
-          │ generation    │
-          └───────┬───────┘
-                  │
-                  ▼
-          ┌───────────────┐
-          │ Answer +      │
-          │ citations     │
-          └───────────────┘
-```
-
 
 ## Project structure
 
@@ -238,3 +159,7 @@ Core endpoints:
 - `GET /documents/` — List uploaded policy documents.
 - `DELETE /documents/{filename}` — Delete a policy and its stored embeddings.
 - `POST /chat/ask` — Ask a question and receive a structured answer with citations.
+
+## Design
+
+For full details on how the system is designed and the trade-offs made, see **[DESIGN.md](DESIGN.md)**.
