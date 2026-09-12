@@ -1,10 +1,10 @@
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
 
 
 class Citation(BaseModel):
     document: str
-    section: str
+    section: Optional[str] = None
 
 
 class Question(BaseModel):
@@ -18,4 +18,5 @@ class Answer(BaseModel):
 
 class LLMResponse(BaseModel):
     answer: str
+    documents_used: List[str] = []
     sections_used: List[str] = []

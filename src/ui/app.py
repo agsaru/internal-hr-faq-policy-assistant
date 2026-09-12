@@ -123,10 +123,12 @@ else:
                     if citations:
                         st.subheader("Sources")
                         for citation in citations:
-                            document = citation.get("document", "Unknown document")
-                            section = citation.get("section", "Unknown section")
-                            st.write(f"Document: {document}")
-                            st.write(f"Section: {section}")
+                            document = citation.get("document")
+                            section = citation.get("section")
+                            if document:
+                                st.write(f"Document: {document}")
+                            if section:
+                                st.write(f"Section: {section}")
                     else:
                         st.info("No citations available.")
                 else:
