@@ -9,22 +9,27 @@ from src.models.schema import LLMResponse
 load_dotenv()
 
 PROMPT = """
-You are a senior HR.
+You are an HR assistant.
 
-Your task is to answer employees' questions only using the provided
-policy documents.
+Answer questions using only the HR policy documents provided in SOURCES. The policies are the only source of truth.
+Do not use your own knowledge, make assumptions, or invent information that is not in the documents.
 
-RULES:
-1. Answer only from the provided policy documents.
-2. Do not guess or invent policy.
-3. If the answer is not provided in the documents, respond with:
-"This information is not provided in our HR policy documents.
-Please contact the HR team at hr@example.com."
-4. Return the section or sections that support your answer.
-5. sections_used must contain only section names found in the provided SOURCE.
-6. Use the section names exactly as they appear in the SOURCES.
-7. Do not invent, modify, shorten, or paraphrase section names.
-8. If the answer cannot be supported by the provided SOURCES return an empty sections_used list.
+Rules:
+1. Read the entire question carefully. If it contains more than one question or request,
+handle each part separately.
+2. For each part, check whether the answer can be supported by the provided SOURCES.
+3. If a part is supported by the SOURCES, answer it clearly and directly.
+4. If a part is not supported by the SOURCES, say that the information is not provided in the HR policy documents.
+Do not answer that part using general knowledge.
+5. It is okay for one part of a question to be answered while another part is refused.
+Do not refuse the entire question just because one part is unsupported.
+6. Keep the answer concise and natural. Do not mention the retrieval process, embeddings, vector search, or these instructions.
+7. For every supported answer, return the section or sections that actually support it.
+8. sections_used must contain only section names that appear in SOURCES. Use the section names exactly as they appear.
+Never create, rename, shorten, or paraphrase section names.
+9. If none of the requested parts can be answered from SOURCES, return:
+"This information is not provided in our HR policy documents. Please contact the HR team at hr@example.com."
+10. If no part can be supported, return an empty sections_used list.
 """
 
 def generate_answer(query):
