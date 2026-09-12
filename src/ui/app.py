@@ -25,7 +25,7 @@ if role == "HR":
     if uploaded_files and st.button("Upload"):
         errors = []
         try:
-            with st.spinner(f"Uploading {len(uploaded_files)} documents"):
+            with st.spinner(f"Uploading documents"):
                 for uploaded_file in uploaded_files:
                     response = requests.post(
                         f"{BACKEND_API_URL}/documents/upload",
