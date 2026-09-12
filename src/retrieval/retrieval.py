@@ -4,9 +4,14 @@ from langchain_core.documents import Document
 
 from src.ingestion.embedding import get_vector_store
 
+RELEVANCE_THRESHOLD=0.15
+
 def search_documents(query, k=5):
     vector_store = get_vector_store()
 
+    score=vector_store.similarity_search_with_relevance_scores(query, k=1)
+    if not score or score[0][1]<RELEVANCE_THRESHOLD:
+        return []
     vector_retriever = vector_store.as_retriever(search_kwargs={"k": k})
     data = vector_store._collection.get(include=["documents", "metadatas"])
 
