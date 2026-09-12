@@ -29,53 +29,64 @@ if role == "HR":
                             uploaded_file.type,
                         )
                     },
+                    timeout=120,
                 )
 
             if response.status_code == 200:
-                message = response.json().get("message", "Policy uploaded successfully.")
-                st.success(message)
+                st.success(response.json().get("message", "Policy uploaded successfully."))
                 st.rerun()
             else:
-                st.error("Upload failed.")
+                st.error(response.json().get("detail", "Upload failed."))
         except requests.exceptions.ConnectionError:
             st.error("FastAPI backend is not running.")
+        except requests.exceptions.RequestException as exc:
+            st.error(f"Upload failed: {exc}")
 
     st.subheader("Uploaded Policies")
 
     try:
-        response = requests.get(f"{BACKEND_API_URL}/documents/")
+        response = requests.get(f"{BACKEND_API_URL}/documents/", timeout=30)
 
         if response.status_code == 200:
             documents = response.json()
 
-            if len(documents) == 0:
+            if not documents:
                 st.info("No policy documents uploaded yet.")
             else:
                 for document in documents:
                     col1, col2 = st.columns([4, 1])
+                    filename = document["filename"]
 
                     with col1:
-                        st.write(f"{document['filename']}")
+                        st.write(filename)
 
                     with col2:
-                        if st.button("Delete", key=document["filename"]):
+                        if st.button("Delete", key=filename):
                             try:
                                 with st.spinner("Deleting document"):
-                                    delete_response = requests.delete(
-                                        f"{BACKEND_API_URL}/documents/{document['filename']}"
+                                    response = requests.delete(
+                                        f"{BACKEND_API_URL}/documents/{filename}",
+                                        timeout=30,
                                     )
-                                if delete_response.status_code == 200:
+                                if response.status_code == 200:
                                     st.success("Document deleted.")
                                     st.rerun()
                                 else:
-                                    st.error("Failed to delete document.")
+                                    st.error(
+                                        response.json().get(
+                                            "detail", "Failed to delete document."
+                                        )
+                                    )
                             except requests.exceptions.ConnectionError:
                                 st.error("FastAPI backend is not running.")
+                            except requests.exceptions.RequestException as exc:
+                                st.error(f"Delete failed: {exc}")
         else:
             st.error("Could not fetch documents.")
     except requests.exceptions.ConnectionError:
         st.warning("FastAPI backend is not running.")
-
+    except requests.exceptions.RequestException as exc:
+        st.warning(f"Could not fetch documents: {exc}")
 else:
     question = st.text_input("Enter your question regarding any policy")
 
@@ -88,6 +99,7 @@ else:
                     response = requests.post(
                         f"{BACKEND_API_URL}/chat/ask",
                         json={"question": question},
+                        timeout=120,
                     )
 
                 if response.status_code == 200:
@@ -106,6 +118,8 @@ else:
                     else:
                         st.info("No citations available.")
                 else:
-                    st.error("Request failed.")
+                    st.error(response.json().get("detail", "Request failed."))
             except requests.exceptions.ConnectionError:
                 st.error("FastAPI backend is not running.")
+            except requests.exceptions.RequestException as exc:
+                st.error(f"Request failed: {exc}")
