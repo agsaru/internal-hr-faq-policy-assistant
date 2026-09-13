@@ -57,39 +57,39 @@ The system is divided into two main flows: **document ingestion** and **question
                ▼                                                          ┌──────────────────────────┐
 ┌──────────────────────────────┐                                          │    Gemini Generation     │
 │      Local Embeddings        │                                          │                          │
-│                              │                                          │ Context = retrieved     │
-│ HuggingFaceEmbeddings        │                                          │ policy chunks only      │
+│                              │                                          │ Context = retrieved      │
+│ HuggingFaceEmbeddings        │                                          │ policy chunks only       │
 │                              │                                          │                          │
-│ all-MiniLM-L6-v2             │                                          │ No guessing / inventing │
+│ all-MiniLM-L6-v2             │                                          │ No guessing / inventing  │
 │                              │                                          └────────────┬─────────────┘
 └──────────────┬───────────────┘                                                       │
                │                                                                        ▼
                ▼                                                          ┌──────────────────────────┐
-        ╔══════════════════════╗                                          │   Structured LLM Output │
-        ║       Chroma         ║                                          │                          │
-        ║    Vector Store      ║                                          │ answer                  │
-        ║                      ║                                          │ sections_used[]         │
+        ╔══════════════════════╗                                          │   Structured LLM Output  │
+        ║       Chroma         ║                                          │ answer                   │
+        ║    Vector Store      ║                                          │ documents_used[]         │
+        ║                      ║                                          │ sections_used[]          │
         ║ hr_faq_policies      ║                                          └────────────┬─────────────┘
         ║                      ║                                                       │
         ║ chunk vectors        ║                                                       ▼
         ║ + metadata           ║                                          ┌──────────────────────────┐
-        ╚══════════════════════╝                                          │   Citation Validation   │
-                                                                         │                          │
-                                                                         │ Check returned sections │
-                                                                         │ against retrieved       │
-                                                                         │ section metadata        │
-                                                                         └────────────┬─────────────┘
+        ╚══════════════════════╝                                          │   Citation Validation    │
+                                                                          │                          │
+                                                                          │  Verify documents_used   │
+                                                                          │  & sections_used against │
+                                                                          │  retrieved chunk metadata│
+                                                                          └────────────┬─────────────┘
                                                                                       │
                                                                                       ▼
                                                                          ┌──────────────────────────┐
-                                                                         │     Final JSON Response │
+                                                                         │     Final JSON Response  │
                                                                          │                          │
                                                                          │ {                        │
                                                                          │   answer: "...",         │
                                                                          │   citations: [           │
                                                                          │     {                    │
-                                                                         │       document: "...",    │
-                                                                         │       section: "..."      │
+                                                                         │       document: "...",   │
+                                                                         │       section: "..."     │
                                                                          │     }                    │
                                                                          │   ]                      │
                                                                          │ }                        │
@@ -249,8 +249,8 @@ LLM Generation (Gemini 2.5 Flash Lite + Strict Instructions)
        │
        ▼
 [Gate 2: Citation Verification]
-Extract LLM `sections_used`
-Verify each against retrieved chunk `section` metadata
+Extract LLM `documents_used` & `sections_used`
+Verify each against retrieved chunk metadata (document & section)
        │
        ▼
 Final JSON Response (Answer + Validated Citations)
@@ -290,28 +290,31 @@ How many casual leave days do employees receive each year?
 
 The system prompt enforces:
 - **Strict document grounding:** Answers must be formulated solely from facts in `SOURCES`.
-- **Exact section naming:** The model must return the exact section titles found in `SOURCES` without paraphrasing or inventing headings.
+- **Exact document and section naming:** When citations are provided, `documents_used` must match exact document filenames in `SOURCES`, and `sections_used` must match exact section names from `SOURCES`. Paraphrasing, shortening, or inventing names is strictly prohibited.
+- **Document-level citation support:** Citations may cite a document without a section (`documents_used` may contain a document even when `sections_used` is empty).
 - **Handling multi-part questions:** Answer supported parts clearly while refusing unsupported parts individually.
 - **No internal meta-talk:** Prohibits robotic phrases like *"Based on the retrieved context..."* or *"According to the vector search..."*.
 
 ### 4.3 Gate 2: Post-Generation Citation Validation
-Gemini generates structured output with two fields:
+Gemini generates structured output with three fields:
 - **`answer`**: The grounded response formulated strictly from the provided chunks.
-- **`sections_used`**: A list of section titles the model consulted.
+- **`documents_used`**: A list of exact document filenames the model consulted (e.g., `["leave-policy.md"]`).
+- **`sections_used`**: A list of exact section titles the model consulted (e.g., `["2. Leave types"]`). Optional or empty if citing at the document level or if no sections exist.
 
 ```json
 {
   "answer": "Employees receive 12 casual leave days per calendar year.",
+  "documents_used": ["leave-policy.md"],
   "sections_used": ["2. Leave types"]
 }
 ```
 
 **Verification Logic:**
-To prevent the model from hallucinating sources or inventing section headings:
-1. The backend extracts all valid section titles from the metadata of the retrieved chunks.
-2. It compares each name in `sections_used` against the retrieved section list (case-insensitively).
-3. Any section name that does not match a retrieved chunk is discarded.
-4. For each verified section, the backend looks up the corresponding document name and forms the final citation `{ "document": "...", "section": "..." }`.
+To prevent the model from hallucinating sources or inventing document and section names:
+1. **Document Validation:** The backend iterates through `documents_used` and checks each document name against the `document` metadata of the retrieved chunks (case-insensitively). Any document name not present in the retrieved chunks is discarded.
+2. **Document-Level Fallback:** If `sections_used` is empty (or no sections apply), the citation is added as `{ "document": matching_document, "section": None }`.
+3. **Section Validation:** When `sections_used` is provided, the backend verifies each section name against the `section` metadata of the matching chunks for that document (case-insensitively). Any section not found in the retrieved context for that document is ignored.
+4. **Citation Construction & Deduplication:** Validated document and section pairs are structured as `{ "document": "...", "section": "..." }`, deduplicated, and returned in the final citations list.
 
 This ensures users only receive citations that genuinely exist in the retrieved policy chunks.
 
@@ -395,13 +398,14 @@ All request and response structures are validated using Pydantic in `src/models/
 | Schema | Attributes | Purpose |
 | :--- | :--- | :--- |
 | `Question` | `question: str` | Validates that incoming employee queries are non-empty strings. |
-| `Citation` | `document: str`, `section: str` | Represents a single verified document and section reference. |
+| `Citation` | `document: str`, `section: Optional[str] = None` | Represents a single verified document and optional section reference. |
 | `Answer` | `answer: str`, `citations: List[Citation]` | The final response object returned by the `/chat/ask` endpoint. |
-| `LLMResponse` | `answer: str`, `sections_used: List[str]` | Enforces structured output on Gemini during answer generation. |
+| `LLMResponse` | `answer: str`, `documents_used: List[str] = []`, `sections_used: List[str] = []` | Enforces structured output on Gemini during answer generation. |
 
 ### Schema Rationale
 - **Predictable API responses:** Returning structured JSON (`citations: List[Citation]`) keeps the frontend simple and avoids parsing citations out of free-form text.
-- **Two-step citation verification:** `LLMResponse` captures raw section names first, allowing the backend to verify each one against actual chunk metadata before building the final `Answer`.
+- **Two-step citation verification:** `LLMResponse` captures raw `documents_used` and `sections_used` first, allowing the backend to independently verify document filenames and section headings against actual retrieved chunk metadata before assembling verified `Citation` objects in `Answer`.
+- **Support for unsectioned documents:** Having `section: Optional[str] = None` in `Citation` allows the system to cite documents that do not have distinct headings or when the LLM references an entire document without specific sections.
 
 ---
 
