@@ -441,4 +441,7 @@ If I had more time to improve the system, I would focus on:
 3. **Document Versioning:**
    Currently, uploading a document with the same name replaces existing chunks. In real HR environments, policies update yearly (like *2025 vs. 2026 Benefits Guide*). Adding version numbers and effective dates to chunk metadata would prevent the system from returning answers from outdated policies.
 
+4. **Handling Tables in PDFs:**
+   HR policy PDFs often include tables for important details like leave allocations, health insurance tiers, and expense limits. Currently, the PDF parser does not extract table structures properly—it reads text as a flat stream, so rows and columns lose their relationships and get scrambled or split across chunks. Because of this, the assistant struggles to answer questions that rely on tabular data. Fixing this by adding layout-aware table parsing (converting tables into structured Markdown) will keep table rows together and ensure cells stay correctly related.
+
 ---
