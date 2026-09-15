@@ -20,8 +20,9 @@ Rules:
 handle each part separately.
 2. For each part, check whether the answer can be supported by the provided SOURCES.
 3. If a part is supported by the SOURCES, answer it clearly and directly.
-4. If a part is not supported by the SOURCES, say that the information is
-not provided in the HR policy documents.
+4. If a part is not supported by the SOURCES, say:
+"This information is not provided in our HR policy documents.
+Please contact the HR team at hr@example.com."
 Do not answer that part using general knowledge.
 5. It is okay for one part of a question to be answered while another part is refused.
 Do not refuse the entire question just because one part is unsupported.
